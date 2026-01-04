@@ -216,12 +216,18 @@ These do **not** affect the draft decisions; they only aggregate metrics into �
 ### Requirements
 - Python 3.10+ (uses modern typing)
 
+# Running the Algorithm
+
+This section explains how to run the course allocation algorithm and describes
+each input argument in a user-friendly way.
+
 ### Run
+
 ```bash
 python3 hbs_social.py \
   --csv-a tables/table1_individual.csv \
   --csv-b tables/table2_pair.csv \
-  --cap-default 10 \
+  --cap-default 80 \
   --b 3 \
   --seed 42 \
   --lambda 0.5 \
@@ -229,6 +235,45 @@ python3 hbs_social.py \
   --out-allocation allocation.csv \
   --out-summary summary.csv
 ```
+
+## Input arguments
+
+- **`--csv-a`**  
+  Path to **Table 1 (individual preferences)**.  
+  Contains each student’s personal ranking and/or score for courses.
+
+- **`--csv-b`**  
+  Path to **Table 2 (pair / friend preferences)**.  
+  Describes which students want to be together and how strong that preference is.
+
+- **`--cap-default`**  
+  Default **capacity per course**.  
+  Each course can accept at most this many students.
+
+- **`--b`**  
+  Number of **courses each student is allowed to pick**.  
+  The algorithm runs `b` snake-style rounds, where in each round every student can pick **at most one course**.  
+  Effectively, this parameter controls how many courses each student will be assigned in total.
+
+- **`--seed`**  
+  Random seed for **reproducibility**.  
+  Using the same seed guarantees identical results.
+
+- **`--lambda`**  
+  Weight of the **friend preference bonus**.  
+  Controls how much being with friends influences course selection.
+
+- **`--mu`**  
+  Weight of the **mutuality bonus**.  
+  Adds extra reward when two students mutually prefer each other.
+
+- **`--out-allocation`**  
+  Output CSV file with the **final student → course assignment**.
+
+- **`--out-summary`**  
+  Output CSV file with **aggregate statistics**  
+  (e.g., average utility, satisfaction metrics, social matching indicators).
+
 
 ### Input CSV formats
 
