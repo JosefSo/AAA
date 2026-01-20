@@ -2,7 +2,7 @@
 
 This README explains how to add **procedural fairness** (fair “voice” in decisions) to a **course allocation** project that already uses:
 - an initial **draft / snake** allocation (HBS-style), and
-- an **improvement phase** with \(N\) iterations (local search / swaps).
+- an **improvement phase** with $N$ iterations (local search / swaps).
 
 The goal is to discuss this idea with professors in a **simple, clear** way.
 
@@ -33,31 +33,31 @@ This is very relevant when we run:
 
 ### 2.1 What is Decision Share?
 
-For each student \(i\), define a set of **favorite options** (e.g., Top-1 or Top-\(k\) courses still feasible).
+For each student $i$, define a set of **favorite options** (e.g., Top-1 or Top-$k$ courses still feasible).
 
 **Decision Share** measures how often the algorithm gives the student something from their favorite set.
 
 There are two practical definitions (choose one depending on your implementation):
 
 #### A) Outcome-based (easy if you output final schedules only)
-Each student receives \(K_i\) courses.
+Each student receives $K_i$ courses.
 
-Let `TopK(i)` = student's top-\(k\) ranked courses.
+Let `TopK(i)` = student's top-$k$ ranked courses.
 
-\[
+$$
 DS_i = \frac{\#\{c \in \text{Assigned}(i) \cap \text{TopK}(i)\}}{\min(K_i, k)}
-\]
+$$
 
 Interpretation:
-- \(DS_i = 1\): student got only top-\(k\) courses (strong “voice”)
-- \(DS_i = 0\): student got none of their top-\(k\) courses (weak “voice”)
+- $DS_i = 1$: student got only top-$k$ courses (strong “voice”)
+- $DS_i = 0$: student got none of their top-$k$ courses (weak “voice”)
 
 #### B) Process-based (best if you have draft rounds / step logs)
-At each step \(t\), student \(i\) has a favorite set among **currently available** courses.
+At each step $t$, student $i$ has a favorite set among **currently available** courses.
 
-\[
+$$
 DS_i = \frac{1}{T_i}\sum_{t \in \text{steps of }i} \mathbf{1}\{\text{choice}_t(i) \in \text{Favorites}_t(i)\}
-\]
+$$
 
 Interpretation:
 - measures whether the *process* consistently respects student’s top choices.
@@ -82,22 +82,22 @@ Procedural fairness gives an additional lens:
 
 ### 4.1 Outcome metrics (standard)
 - **Total Utility**:
-  \[
+  $$
   U_{\text{total}} = \sum_i U_i
-  \]
+  $$
 - **Top-X rate**: % of students who got at least one Top-1 / Top-3 course
 - **Gini of utilities**:
-  - compute over \(\{U_i\}\)
+  - compute over $\{U_i\}$
 
 ### 4.2 Procedural metrics (new layer)
-- **Decision Share per student**: \(\{DS_i\}\)
+- **Decision Share per student**: $\{DS_i\}$
 - **Gini(DS)**: inequality of “voice”
-- **Min DS**: \(\min_i DS_i\) (protects the worst-off)
+- **Min DS**: $\min_i DS_i$ (protects the worst-off)
 - **DS Nash Welfare (DSNW)** (balances voice across students):
-  \[
+  $$
   DSNW = \prod_i (DS_i + \epsilon)
-  \]
-  where \(\epsilon\) is a tiny constant to avoid multiplying by zero (only for the metric computation).
+  $$
+  where $\epsilon$ is a tiny constant to avoid multiplying by zero (only for the metric computation).
 
 > DSNW is high only if **most** students have non-trivial voice.
 
@@ -125,28 +125,28 @@ Procedural fairness can be added mainly to Phase B.
 ### Variant 1 (Welfare-only improvement)
 - Phase A + Phase B local search
 - Accept a move if it improves total utility:
-  \[
+  $$
   \Delta U_{\text{total}} > 0
-  \]
+  $$
 
 ### Variant 2 (Procedurally-aware improvement) ✅ (main proposal)
 - Phase A + Phase B local search
 - Accept a move only if it improves welfare **without harming voice**, e.g.:
 
 **Rule A (hard constraint):**
-\[
+$$
 \Delta U_{\text{total}} > 0 \quad \text{and} \quad \min_i DS_i \ge \tau
-\]
+$$
 Meaning:
 - improve welfare,
-- but guarantee each student has at least \(\tau\) voice (e.g., \(\tau = 0.2\) for Top-3 matching).
+- but guarantee each student has at least $\tau$ voice (e.g., $\tau = 0.2$ for Top-3 matching).
 
 **Rule B (multi-objective):**
-\[
+$$
 \text{accept if } \Delta \big(U_{\text{total}} + \lambda \cdot \log(DSNW)\big) > 0
-\]
+$$
 Meaning:
-- tune \(\lambda\) to trade off welfare vs procedural fairness.
+- tune $\lambda$ to trade off welfare vs procedural fairness.
 
 **Rule C (tie-break):**
 If two moves have similar welfare gain, choose the one with higher DSNW.
@@ -173,7 +173,7 @@ Minimum:
 - optional score/intensity per course (1..5)
 
 For procedural fairness:
-- define Top-\(k\) for DS (e.g., \(k=3\))
+- define Top-$k$ for DS (e.g., $k=3$)
 
 Optional (for a richer thesis):
 - “avoid” list (1–2 people or courses)
@@ -187,31 +187,31 @@ Optional (for a richer thesis):
 ## 9) Utility Model (Simple)
 
 ### 9.1 Course utility
-Let \(pos(i,c)\) be the rank (1 = best).
+Let $pos(i,c)$ be the rank (1 = best).
 A simple decreasing function:
 
-\[
+$$
 U_{\text{course}}(i,c) = M - pos(i,c) + 1
-\]
+$$
 
-If you have a score \(score(i,c)\), you can combine:
+If you have a score $score(i,c)$, you can combine:
 
-\[
+$$
 U_{\text{course}}(i,c) = a \cdot score(i,c) + b \cdot (M - pos(i,c) + 1)
-\]
+$$
 
 ### 9.2 Social utility (optional)
-If student \(i\) wants student \(j\) in the same course:
+If student $i$ wants student $j$ in the same course:
 
-\[
+$$
 U_{\text{social}}(i) = \sum_{c \in \text{Assigned}(i)} \sum_{j \in \text{AssignedToCourse}(c)} w_{ij}
-\]
+$$
 
 Total:
 
-\[
+$$
 U_i = \sum_{c \in \text{Assigned}(i)} U_{\text{course}}(i,c) + \gamma \cdot U_{\text{social}}(i)
-\]
+$$
 
 ---
 
@@ -220,7 +220,7 @@ U_i = \sum_{c \in \text{Assigned}(i)} U_{\text{course}}(i,c) + \gamma \cdot U_{\
 - 4 students: A, B, C, D  
 - 3 courses: X, Y, Z  
 - Capacity: 2 each  
-- Each student gets \(K=1\)
+- Each student gets $K=1$
 
 Suppose Top-2 per student:
 - A: X, Y
