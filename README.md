@@ -1,213 +1,213 @@
-# Procedural Fairness for Course Allocation (Draft + Improvement Phase)
+# Процедурная справедливость для распределения курсов (черновик + этап улучшений)
 
-This README explains how to add **procedural fairness** (fair “voice” in decisions) to a **course allocation** project that already uses:
-- an initial **draft / snake** allocation (HBS-style), and
-- an **improvement phase** with $N$ iterations (local search / swaps).
+Этот README объясняет, как добавить **процедурную справедливость** (справедливое «право голоса» в принятии решений) в проект по **распределению курсов**, который уже использует:
+- начальное распределение через **драфт / «змейку»** (в стиле HBS), и
+- **фазу улучшений** с $N$ итерациями (локальный поиск / обмены).
 
-The goal is to discuss this idea with professors in a **simple, clear** way.
-
----
-
-## 1) Motivation
-
-Most course allocation systems measure fairness only by the **outcome**:
-- who got top courses,
-- total utility,
-- inequality (e.g., Gini),
-- envy.
-
-But recent work on **procedural fairness** says:
-> Fairness is also about the **process**: did each student have a fair chance to influence decisions?
-
-In other words:
-- Outcome fairness = *what you got*
-- Procedural fairness = *how much your preferences actually mattered during decision making*
-
-This is very relevant when we run:
-- a greedy draft,
-- then repeated improvements that might repeatedly benefit the same students.
+Цель — обсудить эту идею с преподавателями **простым и понятным** языком.
 
 ---
 
-## 2) Core Idea: “Voice” / Decision Share
+## 1) Мотивация
 
-### 2.1 What is Decision Share?
+Большинство систем распределения курсов измеряют справедливость только по **результату**:
+- кто получил топ‑курсы,
+- суммарная полезность,
+- неравенство (например, Gini),
+- зависть (envy).
 
-For each student $i$, define a set of **favorite options** (e.g., Top-1 or Top-$k$ courses still feasible).
+Но современные работы по **процедурной справедливости** говорят:
+> Справедливость — это ещё и про **процесс**: был ли у каждого студента честный шанс повлиять на решения?
 
-**Decision Share** measures how often the algorithm gives the student something from their favorite set.
+Иначе говоря:
+- Справедливость по результату = *что ты получил*
+- Процедурная справедливость = *насколько твои предпочтения реально учитывались в ходе принятия решений*
 
-There are two practical definitions (choose one depending on your implementation):
+Это особенно важно, когда мы запускаем:
+- жадный драфт,
+- а затем повторяющиеся улучшения, которые могут снова и снова приносить выгоду одним и тем же студентам.
 
-#### A) Outcome-based (easy if you output final schedules only)
-Each student receives $K_i$ courses.
+---
 
-Let `TopK(i)` = student's top-$k$ ranked courses.
+## 2) Ключевая идея: «голос» / доля решений
+
+### 2.1 Что такое Decision Share?
+
+Для каждого студента $i$ задаём множество его **любимых вариантов** (например, Top‑1 или Top‑$k$ курсов, которые всё ещё достижимы/возможны).
+
+**Decision Share** измеряет, как часто алгоритм даёт студенту что‑то из этого любимого множества.
+
+Есть два практических определения (выбери одно — в зависимости от того, что у тебя доступно в реализации):
+
+#### A) По результату (самый простой вариант, если есть только финальные расписания)
+Каждый студент получает $K_i$ курсов.
+
+Пусть `TopK(i)` = топ‑$k$ курсов студента.
 
 $$
 DS_i = \frac{\#\{c \in \text{Assigned}(i) \cap \text{TopK}(i)\}}{\min(K_i, k)}
 $$
 
-Interpretation:
-- $DS_i = 1$: student got only top-$k$ courses (strong “voice”)
-- $DS_i = 0$: student got none of their top-$k$ courses (weak “voice”)
+Интерпретация:
+- $DS_i = 1$: студент получил только курсы из топ‑$k$ (сильный «голос»)
+- $DS_i = 0$: студент не получил ни одного курса из топ‑$k$ (слабый «голос»)
 
-#### B) Process-based (best if you have draft rounds / step logs)
-At each step $t$, student $i$ has a favorite set among **currently available** courses.
+#### B) По процессу (лучший вариант, если у тебя есть раунды драфта / логи шагов)
+На каждом шаге $t$ студент $i$ имеет любимое множество среди **текущих доступных** курсов.
 
 $$
 DS_i = \frac{1}{T_i}\sum_{t \in \text{steps of }i} \mathbf{1}\{\text{choice}_t(i) \in \text{Favorites}_t(i)\}
 $$
 
-Interpretation:
-- measures whether the *process* consistently respects student’s top choices.
+Интерпретация:
+- измеряет, насколько *процесс* стабильно уважает топ‑выборы студента.
 
 ---
 
-## 3) Why this is “New” for Course Allocation
+## 3) Почему это «новое» для распределения курсов
 
-Traditional metrics can look good while procedural fairness is bad.
+Традиционные метрики могут выглядеть хорошо, даже если процедурная справедливость плохая.
 
-Example:
-- total utility improves,
-- but the system repeatedly “listens” to the same group (high-priority students or lucky draft order),
-- other students rarely get top feasible choices.
+Пример:
+- суммарная полезность растёт,
+- но система снова и снова «слушает» одну и ту же группу (студентов с более высоким приоритетом или с удачным порядком драфта),
+- а другие студенты редко получают свои лучшие достижимые варианты.
 
-Procedural fairness gives an additional lens:
-- **Are we optimizing welfare at the cost of student representation?**
+Процедурная справедливость даёт дополнительную оптику:
+- **Не оптимизируем ли мы благосостояние (welfare) ценой репрезентативности/«права голоса» студентов?**
 
 ---
 
-## 4) Metrics to Add to the Project
+## 4) Метрики, которые можно добавить в проект
 
-### 4.1 Outcome metrics (standard)
-- **Total Utility**:
+### 4.1 Метрики результата (стандартные)
+- **Суммарная полезность**:
   $$
   U_{\text{total}} = \sum_i U_i
   $$
-- **Top-X rate**: % of students who got at least one Top-1 / Top-3 course
-- **Gini of utilities**:
-  - compute over $\{U_i\}$
+- **Top‑X rate**: % студентов, которые получили хотя бы один Top‑1 / Top‑3 курс
+- **Gini по полезностям**:
+  - считать по $\{U_i\}$
 
-### 4.2 Procedural metrics (new layer)
-- **Decision Share per student**: $\{DS_i\}$
-- **Gini(DS)**: inequality of “voice”
-- **Min DS**: $\min_i DS_i$ (protects the worst-off)
-- **DS Nash Welfare (DSNW)** (balances voice across students):
+### 4.2 Процедурные метрики (новый слой)
+- **Decision Share по каждому студенту**: $\{DS_i\}$
+- **Gini(DS)**: неравенство «голоса»
+- **Min DS**: $\min_i DS_i$ (защита наихудшего случая)
+- **DS Nash Welfare (DSNW)** (балансирует «голос» между студентами):
   $$
   DSNW = \prod_i (DS_i + \epsilon)
   $$
-  where $\epsilon$ is a tiny constant to avoid multiplying by zero (only for the metric computation).
+  где $\epsilon$ — маленькая константа, чтобы не умножать на ноль (используется **только** для вычисления метрики).
 
-> DSNW is high only if **most** students have non-trivial voice.
+> DSNW будет высоким только если у **большинства** студентов есть нетривиальный «голос».
 
-### 4.3 Stability (optional but strong academically)
-- **Swap-regret**: how many mutually beneficial swaps still exist after optimization?
-- **Envy rate**: % of students who envy someone’s schedule
-
----
-
-## 5) How to Integrate Procedural Fairness into the Algorithm
-
-You already have:
-1) **Phase A**: Draft allocation (snake)
-2) **Phase B**: Improvement (N iterations)
-
-Procedural fairness can be added mainly to Phase B.
+### 4.3 Стабильность (опционально, но академически сильно)
+- **Swap‑regret**: сколько взаимовыгодных обменов ещё существует после оптимизации?
+- **Envy rate**: % студентов, которые завидуют расписанию кого‑то другого
 
 ---
 
-## 6) Proposed Algorithm Variants
+## 5) Как интегрировать процедурную справедливость в алгоритм
 
-### Variant 0 (Baseline)
-- Phase A only (draft), no improvements.
+У тебя уже есть:
+1) **Фаза A**: драфт‑распределение («змейка»)
+2) **Фаза B**: улучшение (N итераций)
 
-### Variant 1 (Welfare-only improvement)
-- Phase A + Phase B local search
-- Accept a move if it improves total utility:
+Процедурную справедливость проще всего добавлять именно в Фазу B.
+
+---
+
+## 6) Предлагаемые варианты алгоритма
+
+### Вариант 0 (база)
+- Только Фаза A (драфт), без улучшений.
+
+### Вариант 1 (улучшение только по welfare)
+- Фаза A + Фаза B (локальный поиск)
+- Принимаем ход, если он увеличивает суммарную полезность:
   $$
   \Delta U_{\text{total}} > 0
   $$
 
-### Variant 2 (Procedurally-aware improvement) ✅ (main proposal)
-- Phase A + Phase B local search
-- Accept a move only if it improves welfare **without harming voice**, e.g.:
+### Вариант 2 (учитываем процедурную справедливость) ✅ (основное предложение)
+- Фаза A + Фаза B (локальный поиск)
+- Принимаем ход только если он улучшает welfare **и при этом не ухудшает «голос»**, например:
 
-**Rule A (hard constraint):**
+**Правило A (жёсткое ограничение):**
 $$
-\Delta U_{\text{total}} > 0 \quad \text{and} \quad \min_i DS_i \ge \tau
+\Delta U_{\text{total}} > 0 \quad \text{и} \quad \min_i DS_i \ge \tau
 $$
-Meaning:
-- improve welfare,
-- but guarantee each student has at least $\tau$ voice (e.g., $\tau = 0.2$ for Top-3 matching).
+Смысл:
+- улучшаем welfare,
+- но гарантируем каждому студенту хотя бы $\tau$ «голоса» (например, $\tau = 0.2$ для Top‑3).
 
-**Rule B (multi-objective):**
+**Правило B (мультикритериальная цель):**
 $$
-\text{accept if } \Delta \big(U_{\text{total}} + \lambda \cdot \log(DSNW)\big) > 0
+\text{принять, если } \Delta \big(U_{\text{total}} + \lambda \cdot \log(DSNW)\big) > 0
 $$
-Meaning:
-- tune $\lambda$ to trade off welfare vs procedural fairness.
+Смысл:
+- настраиваем $\lambda$, чтобы регулировать компромисс между welfare и процедурной справедливостью.
 
-**Rule C (tie-break):**
-If two moves have similar welfare gain, choose the one with higher DSNW.
+**Правило C (tie‑break):**
+Если два хода дают похожий прирост welfare, выбираем тот, у которого выше DSNW.
 
 ---
 
-## 7) What “Moves” Can Phase B Use?
+## 7) Какие «ходы» может использовать Фаза B?
 
-You can keep your current improvement logic and just add acceptance rules.
-Typical moves:
+Можно оставить текущую логику улучшений и просто добавить правила принятия.
+Типичные ходы:
 
-1) **Single-course reassignment** (if capacity allows)
-2) **2-swap**: swap one course between two students
-3) **k-cycle**: A→B→C→A swaps (optional)
+1) **Переназначение одного курса** (если позволяет вместимость)
+2) **2‑swap**: обмен одним курсом между двумя студентами
+3) **k‑цикл**: обмены A→B→C→A (опционально)
 
-The main new part is not the move type — it’s the **procedural acceptance criteria**.
-
----
-
-## 8) Data to Collect from Students
-
-Minimum:
-- ranking of courses (position 1..M)
-- optional score/intensity per course (1..5)
-
-For procedural fairness:
-- define Top-$k$ for DS (e.g., $k=3$)
-
-Optional (for a richer thesis):
-- “avoid” list (1–2 people or courses)
-- “friends” list (top-3 people)
-- personal weight:
-  - some students care more about friends,
-  - some care more about courses.
+Главная новая часть — не тип хода, а **критерий принятия с учётом процедурной справедливости**.
 
 ---
 
-## 9) Utility Model (Simple)
+## 8) Какие данные собирать у студентов
 
-### 9.1 Course utility
-Let $pos(i,c)$ be the rank (1 = best).
-A simple decreasing function:
+Минимально:
+- ранжирование курсов (позиции 1..M)
+- опционально: score/интенсивность по каждому курсу (1..5)
+
+Для процедурной справедливости:
+- нужно определить Top‑$k$ для DS (например, $k=3$)
+
+Опционально (для более сильной дипломной работы):
+- список «избегать» (1–2 человека или курса)
+- список «друзья» (топ‑3 людей)
+- персональные веса:
+  - кому‑то важнее друзья,
+  - кому‑то важнее курсы.
+
+---
+
+## 9) Модель полезности (простая)
+
+### 9.1 Полезность курса
+Пусть $pos(i,c)$ — ранг (1 = лучший).
+Простая убывающая функция:
 
 $$
 U_{\text{course}}(i,c) = M - pos(i,c) + 1
 $$
 
-If you have a score $score(i,c)$, you can combine:
+Если есть score $score(i,c)$, можно объединять:
 
 $$
 U_{\text{course}}(i,c) = a \cdot score(i,c) + b \cdot (M - pos(i,c) + 1)
 $$
 
-### 9.2 Social utility (optional)
-If student $i$ wants student $j$ in the same course:
+### 9.2 Социальная полезность (опционально)
+Если студент $i$ хочет студента $j$ в том же курсе:
 
 $$
 U_{\text{social}}(i) = \sum_{c \in \text{Assigned}(i)} \sum_{j \in \text{AssignedToCourse}(c)} w_{ij}
 $$
 
-Total:
+Итого:
 
 $$
 U_i = \sum_{c \in \text{Assigned}(i)} U_{\text{course}}(i,c) + \gamma \cdot U_{\text{social}}(i)
@@ -215,49 +215,49 @@ $$
 
 ---
 
-## 10) Small Example (Toy)
+## 10) Маленький пример (игрушечный)
 
-- 4 students: A, B, C, D  
-- 3 courses: X, Y, Z  
-- Capacity: 2 each  
-- Each student gets $K=1$
+- 4 студента: A, B, C, D  
+- 3 курса: X, Y, Z  
+- Вместимость: 2 на курс  
+- Каждый студент получает $K=1$
 
-Suppose Top-2 per student:
+Пусть Top‑2 для каждого студента:
 - A: X, Y
 - B: X, Y
 - C: X, Z
 - D: Y, Z
 
-Outcome S1:
+Результат S1:
 - A→X, B→X, C→Z, D→Y
 
-Decision Shares (Top-2):
-- A got X (Top-2) → DS=1
-- B got X (Top-2) → DS=1
-- C got Z (Top-2) → DS=1
-- D got Y (Top-2) → DS=1
+Decision Share (Top‑2):
+- A получил X (Top‑2) → DS=1
+- B получил X (Top‑2) → DS=1
+- C получил Z (Top‑2) → DS=1
+- D получил Y (Top‑2) → DS=1
 
-Outcome S2 (worse procedural):
+Результат S2 (хуже по процедурной справедливости):
 - A→X, B→Y, C→Y, D→Z
-If C’s Top-2 is {X,Z}, then C got Y → DS=0
+Если у C Top‑2 = {X, Z}, тогда C получил Y → DS=0
 
-Here total utility may look similar, but procedural fairness differs:
+Здесь суммарная полезность может быть похожей, но процедурная справедливость отличается:
 - S1: min DS = 1
 - S2: min DS = 0
 
 ---
 
-## 11) System Diagram
+## 11) Схема системы
 
 ```mermaid
 flowchart TD
-  A[Input: course preferences<br/>rank/score + capacities + K] --> B[Phase A: Snake Draft Allocation]
-  B --> C[Initial schedule S0]
-  C --> D[Phase B: Improvement (N iterations)]
-  D --> E{Proposed acceptance rule}
-  E -->|Welfare-only| F[Accept if ΔU_total > 0]
-  E -->|Procedurally-aware| G[Accept if improves welfare<br/>AND keeps DS fairness]
-  F --> H[Final schedule S*]
-  G --> H[Final schedule S*]
-  H --> I[Report Metrics: Utility, Gini(U), DS, Gini(DS), DSNW, Stability]
+  A[Вход: предпочтения по курсам<br/>ранг/score + вместимости + K] --> B[Фаза A: драфт «змейкой»]
+  B --> C[Начальное расписание S0]
+  C --> D[Фаза B: улучшение (N итераций)]
+  D --> E{Правило принятия хода}
+  E -->|Только welfare| F[Принять, если ΔU_total > 0]
+  E -->|С учётом процедурной справедливости| G[Принять, если улучшает welfare<br/>И сохраняет справедливость DS]
+  F --> H[Финальное расписание S*]
+  G --> H[Финальное расписание S*]
+  H --> I[Отчёт: Utility, Gini(U), DS, Gini(DS), DSNW, Stability]
 ```
