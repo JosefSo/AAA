@@ -191,45 +191,44 @@ A clear visual diagram with key components and data flow is required.
 
 ```mermaid
 flowchart LR
-  subgraph Edge[Pool Site / Edge]
-    SENS[Water Sensors\n(pH, ORP, Temp, NTU, Flow, Level)] --> MCU[Edge Controller\n(ESP32/PLC)]
-    CAM[Optional Camera] --> EDGEAI[Edge AI\n(privacy-first)]
-    MCU --> GW[Gateway\n(Wi‑Fi/LTE)]
+  subgraph Edge["Pool Site / Edge"]
+    SENS["Water Sensors<br/>(pH, ORP, Temp, NTU,<br/>Flow, Level)"] --> MCU["Edge Controller<br/>(ESP32/PLC)"]
+    CAM["Optional Camera"] --> EDGEAI["Edge AI<br/>(privacy-first)"]
+    MCU --> GW["Gateway<br/>(Wi-Fi/LTE)"]
     EDGEAI --> GW
   end
 
-  GW -->|MQTT/HTTPS (mTLS)| ING[Cloud Ingestion API]
-  ING --> TSDB[(Time-Series DB)]
-  ING --> OBJ[(Object/Blob Storage\n(optional events only))]
+  GW -->|"MQTT/HTTPS (mTLS)"| ING["Cloud Ingestion API"]
+  ING --> TSDB[("Time-Series DB")]
+  ING --> OBJ[("Object/Blob Storage<br/>(optional events only)")]
 
-  DEV[Device Registry / PKI\n(provisioning + cert rotation)] -.-> ING
+  DEV["Device Registry / PKI<br/>(provisioning + cert rotation)"] -.-> ING
 
-  TSDB --> FEAT[Feature Builder\n(stream/batch)]
-  FEAT --> INF[ML Inference Service\n(anomaly + forecast)]
-  INF --> POLICY[Decision Policy\n(rule engine / decision tree)]
+  TSDB --> FEAT["Feature Builder<br/>(stream/batch)"]
+  FEAT --> INF["ML Inference Service<br/>(anomaly + forecast)"]
+  INF --> POLICY["Decision Policy<br/>(rule engine / decision tree)"]
 
-  POLICY --> ALERTS[Alerts Service\nSMS/Push/Email]
-  POLICY --> DASH[Web/Mobile Dashboard]
-  POLICY --> ACT[Actuators\n(optional: dosing pump control)]
+  POLICY --> ALERTS["Alerts Service<br/>SMS/Push/Email"]
+  POLICY --> DASH["Web/Mobile Dashboard"]
+  POLICY --> ACT["Actuators<br/>(optional: dosing pump control)"]
 
-  OTA[OTA Updates\n(signed firmware/config)] -.-> GW
+  OTA["OTA Updates<br/>(signed firmware/config)"] -.-> GW
   OTA -.-> MCU
   OTA -.-> EDGEAI
 
-  OBS[Monitoring/Logging\n(metrics + audit trail)] -.-> ING
+  OBS["Monitoring/Logging<br/>(metrics + audit trail)"] -.-> ING
   OBS -.-> INF
   OBS -.-> POLICY
 
-  subgraph Learning[Learning Loop]
-    TSDB --> TRAIN[Training Pipeline\n(weekly/monthly)]
-    TRAIN --> REG[Model Registry]
+  subgraph Learning["Learning Loop"]
+    TSDB --> TRAIN["Training Pipeline<br/>(weekly/monthly)"]
+    TRAIN --> REG["Model Registry"]
     REG --> INF
-    DASH --> FB[Human Feedback\n(true/false labels)]
+    DASH --> FB["Human Feedback<br/>(true/false labels)"]
     FB --> TRAIN
   end
 
-  %% Security labels
-  ING -.-> SEC[Security: mTLS + RBAC\nData minimization for camera]
+  ING -.-> SEC["Security: mTLS + RBAC<br/>Data minimization for camera"]
 ```
 
 ### Notes (what each block does)
